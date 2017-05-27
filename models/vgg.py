@@ -13,8 +13,9 @@ cfg = {
 
 
 class VGG(nn.Module):
-    def __init__(self, vgg_name):
+    def __init__(self, vgg_name, bn_after=False):
         super(VGG, self).__init__()
+        self.bn_after_relu = bn_after
         self.features = self._make_layers(cfg[vgg_name])
         self.classifier = nn.Linear(512, 100)
 
@@ -31,9 +32,15 @@ class VGG(nn.Module):
             if x == 'M':
                 layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
             else:
-                layers += [nn.Conv2d(in_channels, x, kernel_size=3, padding=1),
-                           nn.BatchNorm2d(x),
-                           nn.ReLU(inplace=True)]
+                if not self.bn_after_relu:
+                    layers += [nn.Conv2d(in_channels, x, kernel_size=3, padding=1),
+                               nn.BatchNorm2d(x),
+                               nn.ReLU(inplace=True)]
+                else:
+                    layers += [nn.Conv2d(in_channels, x, kernel_size=3, padding=1),
+                               nn.ReLU(inplace=True),
+                               nn.BatchNorm2d(x)]
+
                 in_channels = x
         layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
         return nn.Sequential(*layers)
