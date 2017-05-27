@@ -23,6 +23,8 @@ from tensorboard_logger import configure, log_value
 parser = argparse.ArgumentParser(description='PyTorch CIFAR100 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
+parser.add_argument('--bnafter', '-a', action='store_true', help='Put batch norm layer after relu')
+
 args = parser.parse_args()
 
 configure('log', flush_secs=3000)
@@ -62,7 +64,7 @@ if args.resume:
     start_epoch = checkpoint['epoch']
 else:
     print('==> Building model..')
-    net = VGG('VGG16')
+    net = VGG('VGG16', args.bnafter)
     # net = ResNet18()
     # net = GoogLeNet()
     # net = DenseNet121()
