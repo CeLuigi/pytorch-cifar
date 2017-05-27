@@ -23,11 +23,12 @@ from tensorboard_logger import configure, log_value
 parser = argparse.ArgumentParser(description='PyTorch CIFAR100 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
+parser.add_argument('--exp', default='', type=str, help='directory for results')
 parser.add_argument('--bnafter', '-a', action='store_true', help='Put batch norm layer after relu')
 
 args = parser.parse_args()
 
-configure('log', flush_secs=3000)
+configure(os.path.join(args.exp, 'log'), flush_secs=3000)
 
 use_cuda = torch.cuda.is_available()
 best_acc = 0  # best test accuracy
@@ -57,19 +58,15 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False,
 if args.resume:
     # Load checkpoint.
     print('==> Resuming from checkpoint..')
-    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-    checkpoint = torch.load('./checkpoint/ckpt.t7')
+    assert os.path.isdir(os.path.join(args.exp, 'checkpoint')), 'Error: no checkpoint directory found!'
+    checkpoint = torch.load(os.path.join(args.exp, 'checkpoint/ckpt.t7'))
     net = checkpoint['net']
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
 else:
     print('==> Building model..')
     net = VGG('VGG16', args.bnafter)
-    # net = ResNet18()
-    # net = GoogLeNet()
-    # net = DenseNet121()
-    # net = ResNeXt29_2x64d()
-
+    
 if use_cuda:
     net.cuda()
     net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
@@ -150,9 +147,9 @@ def test(epoch):
             'acc': acc,
             'epoch': epoch,
         }
-        if not os.path.isdir('checkpoint'):
-            os.mkdir('checkpoint')
-        torch.save(state, './checkpoint/ckpt.t7')
+        if not os.path.isdir(os.path.join(args.exp, 'checkpoint')):
+            os.mkdir(os.path.join(args.exp, 'checkpoint'))
+        torch.save(state, os.path.join(args.exp, 'checkpoint/ckpt.t7'))
         best_acc = acc
 
 
